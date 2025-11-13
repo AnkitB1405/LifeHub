@@ -2,51 +2,37 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
-const tasksRouter = require('../routes/tasks');
-const connectDB = require('./db');
+const mongoose = require('mongoose');
 
+
+// NOTE: require from src -> routes inside src
+const tasksRouter = require('../routes/tasks'); // ← use ./routes/tasks if tasks.js is under src/routes
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// --- MongoDB Connection ---
-connectDB();
+mongoose.connect('mongodb://127.0.0.1:27017/lifehub')
+  .then(() => console.log('✅ MongoDB connected'))
+  .catch(err => console.error('❌ Connection error:', err));
 
-// --- Middleware ---
 app.use(cors());
 app.use(express.json());
-app.use('/api/tasks', tasksRouter);
 
-// Serve static frontend assets from public/
-app.use(express.static(path.join(__dirname, '..', 'public')));
+// Provide an /api root so GET /api responds
+app.get('/api', (req, res) => {
+  res.json({ ok: true, message: 'LifeHub API root. Try /api/health or /api/tasks' });
+});
 
-// --- Routes ---
+app.use('/api/tasks', tasksRouter); // tasksRouter handles routes under /api/tasks
+
 app.get('/api/health', (req, res) => {
   res.json({ success: true, status: 'ok', time: new Date().toISOString() });
 });
 
-// --- Serve index file ---
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
-// --- Start Server ---
-const server = app.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`🚀 LifeHub server running at http://localhost:${PORT}`);
-});
-
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  console.log('\nShutting down server...');
-  server.close(async () => {
-    console.log('HTTP server closed');
-    try {
-      const mongoose = require('mongoose');
-      await mongoose.connection.close(false);
-      console.log('MongoDB connection closed');
-    } catch (err) {
-      console.error('Error closing MongoDB connection', err);
-    }
-    process.exit(0);
-  });
 });
