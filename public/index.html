@@ -17,7 +17,13 @@
     .cal-cell.empty{background:transparent;cursor:default}
     #calEvents{margin-top:8px;list-style:none;padding:0}
     #calEvents li{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-radius:6px;background:var(--panel-bg);margin-bottom:6px}
-    #calForm{display:flex;gap:8px;margin-top:6px}
+    #calForm{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+    .cal-row{display:flex;gap:8px}
+    /* make calendar Add button full-width and visually consistent */
+    #calendarWidget .cal-add{width:100%;display:block;box-shadow:none;border-radius:8px;padding:10px 12px;text-align:center}
+    /* calendar-specific primary button: subtle and inline */
+    #calendarWidget .btn-primary{padding:8px 10px;border-radius:8px;box-shadow:none;font-weight:600}
+    #calendarWidget .btn-primary.cal-add{padding:10px 12px;border-radius:10px}
     #calForm input[type=date]{width:40%}
     #calForm input[type=text]{flex:1}
   </style>
@@ -88,9 +94,11 @@
               <div id="calGrid" class="cal-grid"></div>
 
               <form id="calForm">
-                <input type="date" id="calDate" required />
-                <input type="text" id="calTitle" placeholder="Event title" required />
-                <button class="btn-primary">Add Event</button>
+                <div class="cal-row">
+                  <input type="date" id="calDate" required />
+                  <input type="text" id="calTitle" placeholder="Event title" required />
+                </div>
+                <button class="btn-primary cal-add">Add Event</button>
               </form>
 
               <ul id="calEvents"></ul>
@@ -223,6 +231,16 @@
         localStorage.setItem('lifehub_theme', mode);
         apply(mode);
       });
+    })();
+    // mark active topbar pill
+    (function(){
+      try{
+        const path = location.pathname || '/';
+        document.querySelectorAll('.links a.pill').forEach(a=>{
+          const href = a.getAttribute('href') || '/';
+          if(href === path){ a.classList.add('active'); a.setAttribute('aria-current','page'); a.style.pointerEvents='none'; }
+        });
+      }catch(e){/* ignore */}
     })();
     document.getElementById('spForm').addEventListener('submit', async e=>{ e.preventDefault(); const title = document.getElementById('spTitle').value; await fetch('/api/studyplans',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title})}); document.getElementById('spTitle').value=''; loadAll(); });
     // Apply template

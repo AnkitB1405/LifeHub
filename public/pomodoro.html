@@ -20,7 +20,7 @@
             <div class="knob"></div>
           </div>
         </div>
-        <div class="links"><a class="pill" href="/">Study Plan</a> <a class="pill" href="/tasks.html">Tasks</a> <a class="pill" href="/budgets.html">Budgets</a></div>
+        <div class="links"><a class="pill" href="/">Study Plan</a> <a class="pill" href="/tasks.html">Tasks</a> <a class="pill" href="/pomodoro.html">Pomodoro</a> <a class="pill" href="/budgets.html">Budgets</a></div>
       </div>
     </div>
 
@@ -55,6 +55,17 @@
       };
       let mode = localStorage.getItem('lifehub_theme') || 'dark'; apply(mode);
       toggle.addEventListener('click', ()=>{ mode = (mode==='dark')? 'light' : 'dark'; localStorage.setItem('lifehub_theme', mode); apply(mode); });
+    })();
+
+    // mark active topbar pill
+    (function(){
+      try{
+        const path = location.pathname || '/pomodoro.html';
+        document.querySelectorAll('.links a.pill').forEach(a=>{
+          const href = a.getAttribute('href') || '/';
+          if(href === path){ a.classList.add('active'); a.setAttribute('aria-current','page'); a.style.pointerEvents='none'; }
+        });
+      }catch(e){}
     })();
 
     // Pomodoro timer logic

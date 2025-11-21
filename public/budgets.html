@@ -6,6 +6,44 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>LifeHub — Budgets</title>
   <link rel="stylesheet" href="/styles.css">
+  <style>
+    /* Budgets page tweaks: make Add buttons subtle and align form controls */
+    #budgetForm, #catForm { align-items: center; }
+    #budgetForm input, #budgetForm select, #catForm input { padding:8px 10px; border-radius:8px; background:var(--input-bg); border:1px solid var(--border); }
+    #budgetForm .btn-primary, #catForm .btn-primary, #manageCats.btn-ghost { padding:8px 10px; border-radius:8px; box-shadow:none; background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02)); color:var(--text); border:1px solid var(--border); }
+    /* make inline controls visually consistent */
+    #budgetForm .btn-primary { margin-left:0; }
+    #catForm .btn-primary { width:72px }
+    /* soften aside cards and chart container */
+    aside .card { box-shadow: 0 6px 18px rgba(3,6,23,0.28); border:1px solid rgba(255,255,255,0.02); }
+    #budgetChart{border-radius:8px;display:block;width:100%;height:auto}
+    /* legend rows subtle background */
+    #chartLegend > div { padding:8px; border-radius:8px; background: transparent }
+      /* ensure selects use theme colors (avoid white-on-white dropdown) */
+      .template-select, select#bCategory, select#categoryFilter {
+        background: var(--input-bg) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+        padding:8px 10px;
+        border-radius:8px;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+      }
+      .template-select option, select#bCategory option, select#categoryFilter option {
+        background: var(--panel) !important;
+        color: var(--text) !important;
+      }
+    /* slightly larger remove buttons for categories */
+    #categoriesList .icon-btn { padding:6px 10px }
+    /* Narrow right column so the aside moves left and borders look cleaner */
+    .card.grid { grid-template-columns: 1fr 300px !important; }
+    @media (max-width:1000px){ .card.grid { grid-template-columns: 1fr !important; } }
+    /* category form layout: stack inputs with full-width add button */
+    #catForm{display:flex;flex-direction:column;gap:8px}
+    #catForm .cat-row{display:flex;gap:8px}
+    #catForm .cat-add{width:100%;box-shadow:none;border-radius:8px;padding:10px 12px;display:flex;justify-content:center;align-items:center;gap:0}
+  </style>
 </head>
 
 <body>
@@ -14,15 +52,14 @@
       <div style="display:flex;align-items:center;gap:16px">
         <h1 style="margin:0">LifeHub — Budgets</h1>
       </div>
-      <div style="display:flex;align-items:center;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px">
         <div class="theme-toggle">
           <span class="small-muted">Theme</span>
           <div id="themeToggle" class="toggle" title="Toggle theme">
             <div class="knob"></div>
           </div>
         </div>
-        <div class="links"><a class="pill" href="/">Study Plan</a> <a class="pill" href="/tasks.html">Tasks</a> <a
-            class="pill" href="/pomodoro.html">Pomodoro</a></div>
+        <div class="links"><a class="pill" href="/">Study Plan</a> <a class="pill" href="/tasks.html">Tasks</a> <a class="pill" href="/pomodoro.html">Pomodoro</a> <a class="pill" href="/budgets.html">Budgets</a></div>
       </div>
     </div>
 
@@ -66,10 +103,12 @@
         <div class="card" style="margin-top:12px">
           <h3 style="margin:0 0 8px 0">Categories</h3>
           <div id="categoriesList" style="display:flex;flex-direction:column;gap:8px"></div>
-          <form id="catForm" style="display:flex;gap:8px;margin-top:10px">
-            <input id="catName" placeholder="Category name" required />
-            <input id="catSymbol" placeholder="Symbol (emoji)" style="width:80px" />
-            <button class="btn-primary">Add</button>
+          <form id="catForm" style="margin-top:10px">
+            <div class="cat-row">
+              <input id="catName" placeholder="Category name" required />
+              <input id="catSymbol" placeholder="Symbol (emoji)" style="width:80px" />
+            </div>
+            <button class="btn-primary cat-add">Add</button>
           </form>
         </div>
       </aside>
@@ -80,6 +119,23 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const INR = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 });
+      // Theme toggle (persist) - ensure budgets page respects saved theme and toggles
+      (function(){
+        const toggle = document.getElementById('themeToggle');
+        const apply = (mode)=>{
+          if(!toggle) return;
+          if(mode==='light'){
+            document.body.classList.add('light');
+            toggle.classList.add('light');
+          } else {
+            document.body.classList.remove('light');
+            toggle.classList.remove('light');
+          }
+        };
+        let mode = localStorage.getItem('lifehub_theme') || 'dark';
+        apply(mode);
+        if(toggle) toggle.addEventListener('click', ()=>{ mode = (mode==='dark')? 'light' : 'dark'; localStorage.setItem('lifehub_theme', mode); apply(mode); });
+      })();
       async function fetchJSON(url, opts) { const r = await fetch(url, opts); if(!r.ok) throw new Error('Network response not ok: '+r.status); return r.json(); }
 
       function log(...args){ try{ console.log.apply(console,args); }catch(e){} }
@@ -186,6 +242,17 @@
       // --- Init ---
       populateCategorySelect(); renderCategories(); populateCategoryFilter(); loadBudgets();
     });
+
+    // mark active topbar pill (for budgets page)
+    (function(){
+      try{
+        const path = location.pathname || '/budgets.html';
+        document.querySelectorAll('.links a.pill').forEach(a=>{
+          const href = a.getAttribute('href') || '/';
+          if(href === path){ a.classList.add('active'); a.setAttribute('aria-current','page'); a.style.pointerEvents='none'; }
+        });
+      }catch(e){}
+    })();
   </script>
 </body>
 
